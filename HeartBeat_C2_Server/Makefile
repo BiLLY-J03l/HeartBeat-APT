@@ -1,7 +1,7 @@
 # Makefile for compiling HeartBeat_Server
-
+# add -Wall to cflags to view all warnings
 CC = gcc
-CFLAGS = -Wall -g  # Optional flags for warnings and debugging
+CFLAGS =  -g # Optional flags for warnings and debugging
 TARGET = HeartBeat_Server
 SRC = HeartBeat_Server.c
 CUSTOM_HEADER = c2_modules.c
