@@ -100,29 +100,6 @@ void HandleLspid(char *cmd,int client_socket){
 
 void HandleShell(char *cmd,int client_socket) {
 	
-	/*
-	ssize_t sent_bytes = 0;
-	ssize_t bytes_received = 0;
-	
-	
-	sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
-	if (sent_bytes == -1){
-		printf("[x] send() failed\n");
-		return;
-	}
-	
-
-	while (1){
-
-		char recv_buf[BUFFER_SIZE] = {0};
-		bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE - 1, 0);
-	        if (bytes_received < 0) {
-	            perror("[x] recv() failed\n");
-	            exit(EXIT_FAILURE);
-	        }
-	    printf("%s",recv_buf);
-	}
- 	*/
 
 
     ssize_t sent_bytes = 0;

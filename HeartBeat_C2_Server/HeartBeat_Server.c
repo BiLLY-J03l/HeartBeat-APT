@@ -106,7 +106,7 @@ int main(void){
 		else if ( strcmp(cmd,"shell") == 0){
 			printf("going to Hande func\n");
 			HandleShell(cmd,client_socket);
-			cmd[0] = '\0';
+			//cmd[0] = '\0';
 			continue;
 		}
 
