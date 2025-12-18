@@ -190,6 +190,9 @@ void HandleShell(char *cmd,int client_socket) {
     
     // Restore original flags
     fcntl(STDIN_FILENO, F_SETFL, flags);
+    fcntl(client_socket, F_SETFL, sock_flags);
+    tcflush(STDIN_FILENO, TCIFLUSH);
+    clearerr(stdin);
 
 
  	return;
