@@ -12,8 +12,11 @@ all: $(TARGET)
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) $(CUSTOM_HEADER) -o $(TARGET)
 
+#Rebuild target
+rebuild: clean all 
+
 # Clean target to remove compiled files
 clean:
 	rm -f $(TARGET)
 
-.PHONY: all clean
+.PHONY: all rebuild clean

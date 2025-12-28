@@ -370,3 +370,33 @@ int DownloadFile(char *cmd,int client_socket, char * filename) {
 
     return 0;
 }
+
+
+int DeleteRequestedFile(char *cmd, int client_socket, char * filename){
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        perror("[x] send() failed");
+        return -1;
+    }
+    char recv_buf[BUFFER_SIZE] = {0};
+
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE , 0);
+    if (bytes_received < 0) {
+        perror("[x] recv() failed\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    decrypt( (unsigned char *)recv_buf,(size_t) bytes_received);
+    //printf("[+] recv_buf == %s\n",recv_buf);
+    int err_no = atoi(recv_buf);
+    if (err_no == 0){
+        printf("[+] Deleted %s successfully!\n",filename);
+        return 0;
+    }
+    
+    printf("[x] Delete failed! Err: %d\n",err_no);
+    return 0;
+}

