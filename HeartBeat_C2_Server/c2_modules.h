@@ -9,3 +9,4 @@ void HandleStopProcess(char *cmd, int client_socket);
 int UploadFile(char *cmd ,int client_socket, char * filename,  char * FullWindowsPath);
 int DownloadFile(char *cmd, int client_socket, char * filename);
 int DeleteRequestedFile(char *cmd, int client_socket, char * filename);
+int HandleReboot(char *cmd , int client_socket);

