@@ -1,5 +1,5 @@
 # HeartBeat-APT
-C implementation of the HeartBeat APT
+C implementation of 2012's HeartBeat APT
 
 # Project Components:
 1. **Bundled Document**
