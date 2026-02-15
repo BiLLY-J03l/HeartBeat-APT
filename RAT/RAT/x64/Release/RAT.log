@@ -1,0 +1,49 @@
+﻿  RAT.c
+  rat_modules.c
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(74,3): warning C4098: 'InitConn': 'void' function returning a value
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(82,3): warning C4098: 'InitConn': 'void' function returning a value
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(132,26): warning C4244: '=': conversion from 'INT_PTR' to 'u_short', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(133,33): warning C4244: '=': conversion from 'INT_PTR' to 'ULONG', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(144,13): warning C4244: '=': conversion from 'INT_PTR' to 'int', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(167,17): warning C4244: '=': conversion from 'INT_PTR' to 'DWORD', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(363,11): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(370,51): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(452,45): warning C4477: 'snprintf' : format string '%s' requires an argument of type 'char *', but variadic argument 2 has type 'WCHAR *'
+      D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(452,45):
+      consider using '%ls' in the format string
+      D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(452,45):
+      consider using '%lls' in the format string
+      D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(452,45):
+      consider using '%Ls' in the format string
+      D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(452,45):
+      consider using '%ws' in the format string
+  
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(442,9): warning C4047: 'initializing': 'HANDLE' differs in levels of indirection from 'INT_PTR'
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(435,12): warning C4101: 'CID': unreferenced local variable
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(500,45): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(572,19): warning C4244: '=': conversion from 'INT_PTR' to 'int', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(598,16): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(608,14): warning C4244: 'initializing': conversion from 'INT_PTR' to 'int', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(644,19): warning C4244: '=': conversion from 'INT_PTR' to 'int', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(665,9): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(697,18): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(757,3): warning C4098: 'ListDrives': 'void' function returning a value
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(865,54): warning C4267: '=': conversion from 'size_t' to 'DWORD', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(875,120): warning C4047: 'function': 'DWORD' differs in levels of indirection from 'void *'
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(875,120): warning C4024: 'CreateFileW': different types for formal and actual parameter 6
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(886,72): warning C4244: 'function': conversion from 'SIZE_T' to 'DWORD', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(901,120): warning C4047: 'function': 'DWORD' differs in levels of indirection from 'void *'
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(901,120): warning C4024: 'CreateFileW': different types for formal and actual parameter 6
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(931,19): warning C4244: '=': conversion from 'INT_PTR' to 'int', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(953,27): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(971,3): warning C4098: 'GetUpdatedVersionFromC2': 'void' function returning a value
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(989,18): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(1014,55): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(1089,10): warning C4133: 'function': incompatible types - from 'unsigned short [16]' to 'const char *const '
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\src\rat_modules.c(1104,10): warning C4133: 'function': incompatible types - from 'unsigned short [12]' to 'const char *const '
+  Generating code
+  1 of 31 functions ( 3.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  RAT.vcxproj -> D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\RAT\x64\Release\RAT.exe
