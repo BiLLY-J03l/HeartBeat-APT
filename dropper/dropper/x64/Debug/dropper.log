@@ -1,0 +1,12 @@
+﻿  dropper.c
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(87,118): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(122,11): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(124,2): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(126,11): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(128,2): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(130,11): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(132,2): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(134,32): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(135,31): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(167,11): warning C4090: 'function': different 'const' qualifiers
+  dropper.vcxproj -> D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\x64\Debug\dropper.exe

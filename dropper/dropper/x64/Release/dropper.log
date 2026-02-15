@@ -1,0 +1,19 @@
+﻿  dropper.c
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(68,118): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(119,31): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(150,11): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(155,99): warning C4267: 'function': conversion from 'size_t' to 'DWORD', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(166,99): warning C4267: 'function': conversion from 'size_t' to 'DWORD', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(194,32): warning C4090: 'function': different 'const' qualifiers
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(222,54): warning C4267: '=': conversion from 'size_t' to 'DWORD', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(232,121): warning C4047: 'function': 'DWORD' differs in levels of indirection from 'void *'
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(232,121): warning C4024: 'CreateFileW': different types for formal and actual parameter 6
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(242,74): warning C4244: 'function': conversion from 'SIZE_T' to 'DWORD', possible loss of data
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(257,120): warning C4047: 'function': 'DWORD' differs in levels of indirection from 'void *'
+D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\src\dropper.c(257,120): warning C4024: 'CreateFileW': different types for formal and actual parameter 6
+  Generating code
+  0 of 9 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  dropper.vcxproj -> D:\Malware Dev for ethical hackers - course\projects\19- UPCOMING\HeartBeat APT\dropper\x64\Release\dropper.exe
